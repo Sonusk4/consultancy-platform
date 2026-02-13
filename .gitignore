@@ -24,5 +24,8 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 
-# Prisma
-prisma/migrations/
+# Environment variables (never commit)
+.env
+.env.local
+.env.*.local
+

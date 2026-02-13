@@ -8,11 +8,14 @@ const ConsultantProfile = () => {
     bio: '',
     languages: '', // comma-separated
     hourly_price: '',
+    profile_pic: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [profilePicPreview, setProfilePicPreview] = useState(null);
 
   useEffect(() => {
     fetchConsultantProfile();
@@ -35,6 +38,7 @@ const ConsultantProfile = () => {
       if (response.status === 200) {
         const data = await response.json();
         setConsultantData(data);
+        if (data.profile_pic) setProfilePicPreview(data.profile_pic);
         setIsEditing(true);
       }
     } catch (err) {
@@ -48,6 +52,57 @@ const ConsultantProfile = () => {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleProfilePicUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProfilePicPreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+
+    // Upload to Cloudinary via backend
+    setUploading(true);
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        setError('You must be logged in');
+        return;
+      }
+
+      const token = await user.getIdToken();
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('http://localhost:5000/consultant/upload-profile-pic', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to upload profile picture');
+      }
+
+      setConsultantData(prev => ({
+        ...prev,
+        profile_pic: data.profile_pic
+      }));
+      setSuccess('Profile picture updated!');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.message || 'Error uploading profile picture');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -111,6 +166,29 @@ const ConsultantProfile = () => {
     <div className="login-container">
       <h2>👨‍💼 {isEditing ? 'Update' : 'Create'} Consultant Profile</h2>
       
+      {/* Profile Picture Section */}
+      <div className="profile-pic-section" style={styles.profilePicSection}>
+        <div style={styles.profilePicContainer}>
+          {profilePicPreview ? (
+            <img src={profilePicPreview} alt="Profile" style={styles.profilePic} />
+          ) : (
+            <div style={styles.profilePicPlaceholder}>📸</div>
+          )}
+        </div>
+        <label htmlFor="profile-pic-input" style={styles.uploadLabel}>
+          📤 {uploading ? 'Uploading...' : 'Upload Profile Picture'}
+        </label>
+        <input
+          id="profile-pic-input"
+          type="file"
+          accept="image/*"
+          onChange={handleProfilePicUpload}
+          disabled={uploading}
+          style={{ display: 'none' }}
+        />
+        <p style={styles.hint}>Max 5MB • JPG, PNG, GIF</p>
+      </div>
+      
       <form onSubmit={handleSubmit}>
         <label>
           <span>Consultant Type</span>
@@ -161,11 +239,11 @@ const ConsultantProfile = () => {
         </label>
 
         <label>
-          <span>Hourly Price ($) *</span>
+          <span>Hourly Price (₹) *</span>
           <input
             type="number"
             name="hourly_price"
-            placeholder="50"
+            placeholder="500"
             value={consultantData.hourly_price}
             onChange={handleChange}
             step="0.01"
@@ -188,6 +266,54 @@ const ConsultantProfile = () => {
       </div>
     </div>
   );
+};
+
+const styles = {
+  profilePicSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginBottom: '30px',
+    padding: '20px',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: '8px',
+    border: '2px dashed rgba(255, 255, 255, 0.2)'
+  },
+  profilePicContainer: {
+    width: '120px',
+    height: '120px',
+    borderRadius: '50%',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: '15px',
+    overflow: 'hidden',
+    border: '3px solid rgba(37, 99, 235, 0.5)'
+  },
+  profilePic: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover'
+  },
+  profilePicPlaceholder: {
+    fontSize: '48px'
+  },
+  uploadLabel: {
+    padding: '10px 20px',
+    backgroundColor: '#2563eb',
+    color: 'white',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: 'bold',
+    transition: 'background-color 0.3s'
+  },
+  hint: {
+    fontSize: '12px',
+    color: '#999',
+    marginTop: '10px'
+  }
 };
 
 export default ConsultantProfile;

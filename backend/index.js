@@ -5,6 +5,8 @@ const { PrismaClient } = require('@prisma/client');
 const { PrismaPg } = require('@prisma/adapter-pg');
 const { Pool } = require('pg');
 const nodemailer = require('nodemailer');
+const cloudinary = require('cloudinary').v2;
+const multer = require('multer');
 const verifyFirebaseToken = require('./middleware/authMiddleware');
 require('dotenv').config();
 
@@ -20,6 +22,23 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER || 'your-email@gmail.com',
     pass: process.env.EMAIL_PASS || 'your-app-password'
   }
+});
+
+/**
+ * Cloudinary configuration for image uploads
+ */
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+/**
+ * Multer configuration for handling file uploads
+ */
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB max
 });
 
 /**
@@ -134,6 +153,8 @@ app.post('/auth/send-otp', async (req, res) => {
     // Send OTP via email
     try {
       console.log(`📧 Attempting to send OTP to ${email} using ${process.env.EMAIL_USER}`);
+      console.log(`📧 Transporter config - User: ${process.env.EMAIL_USER}, Password: ${process.env.EMAIL_PASS ? '***' + process.env.EMAIL_PASS.slice(-4) : 'NOT SET'}`);
+      
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
         to: email,
@@ -151,8 +172,11 @@ app.post('/auth/send-otp', async (req, res) => {
       console.log(`✓ OTP email sent to ${email}. OTP: ${otp}`);
     } catch (emailError) {
       console.error(`❌ Email send failed:`, emailError.message);
+      console.error(`❌ Full error:`, emailError);
+      console.error(`🔧 Check: EMAIL_USER="${process.env.EMAIL_USER}", EMAIL_PASS set: ${!!process.env.EMAIL_PASS}`);
       console.log(`📝 For testing - OTP is: ${otp}`);
     }
+
 
     res.status(200).json({ 
       message: 'OTP sent successfully',
@@ -267,7 +291,12 @@ app.post('/consultant/register', verifyFirebaseToken, async (req, res) => {
       return res.status(404).json({ error: 'Could not create or find user' });
     }
 
-    // Create consultant profile
+    // Delete existing consultant profile if any (clean slate)
+    await prisma.consultant.deleteMany({
+      where: { userId: user.id }
+    });
+
+    // Create new consultant profile
     const consultant = await prisma.consultant.create({
       data: {
         userId: user.id,
@@ -351,6 +380,59 @@ app.put('/consultant/profile', verifyFirebaseToken, async (req, res) => {
   } catch (error) {
     console.error('Update Consultant Error:', error.message);
     res.status(500).json({ error: 'Failed to update consultant profile' });
+  }
+});
+
+/**
+ * POST /consultant/upload-profile-pic
+ * Upload consultant profile picture to Cloudinary
+ */
+app.post('/consultant/upload-profile-pic', verifyFirebaseToken, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file provided' });
+    }
+
+    // Upload to Cloudinary
+    const uploadPromise = new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { folder: 'consultancy-platform/profile-pics' },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      uploadStream.end(req.file.buffer);
+    });
+
+    const uploadResult = await uploadPromise;
+    const imageUrl = uploadResult.secure_url;
+
+    // Get user
+    const user = await prisma.user.findUnique({
+      where: { firebase_uid: req.user.firebase_uid },
+      include: { consultant: true }
+    });
+
+    if (!user || !user.consultant) {
+      return res.status(404).json({ error: 'Consultant profile not found' });
+    }
+
+    // Update consultant with new profile picture
+    const updatedConsultant = await prisma.consultant.update({
+      where: { id: user.consultant.id },
+      data: { profile_pic: imageUrl }
+    });
+
+    console.log(`✓ Profile picture uploaded for ${user.email}`);
+    res.status(200).json({ 
+      message: 'Profile picture uploaded successfully',
+      profile_pic: imageUrl,
+      consultant: updatedConsultant
+    });
+  } catch (error) {
+    console.error('Upload Error:', error.message);
+    res.status(500).json({ error: 'Failed to upload profile picture: ' + error.message });
   }
 });
 
