@@ -1,27 +1,28 @@
-const express = require('express');
-const cors = require('cors');
-const admin = require('firebase-admin');
-const { PrismaClient } = require('@prisma/client');
-const { PrismaPg } = require('@prisma/adapter-pg');
-const { Pool } = require('pg');
-const nodemailer = require('nodemailer');
-const cloudinary = require('cloudinary').v2;
-const multer = require('multer');
-const verifyFirebaseToken = require('./middleware/authMiddleware');
-require('dotenv').config();
-
+const express = require("express");
+const cors = require("cors");
+const admin = require("firebase-admin");
+const { PrismaClient } = require("@prisma/client");
+const { PrismaPg } = require("@prisma/adapter-pg");
+const { Pool } = require("pg");
+const nodemailer = require("nodemailer");
+const cloudinary = require("cloudinary").v2;
+const multer = require("multer");
+const verifyFirebaseToken = require("./middleware/authMiddleware");
+require("dotenv").config();
+const http = require("http");
+const { Server } = require("socket.io");
 const app = express();
-
+const server = http.createServer(app);
 /**
  * Nodemailer configuration for Email OTP
  * Using Gmail or your preferred email service
  */
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER || 'your-email@gmail.com',
-    pass: process.env.EMAIL_PASS || 'your-app-password'
-  }
+    user: process.env.EMAIL_USER || "your-email@gmail.com",
+    pass: process.env.EMAIL_PASS || "your-app-password",
+  },
 });
 
 /**
@@ -50,11 +51,14 @@ const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({
   adapter,
-  errorFormat: 'pretty',
+  errorFormat: "pretty",
 });
 
 app.use(cors());
 app.use(express.json());
+app.get("/", (req, res) => {
+  res.send("Backend + Socket + Neon is running 🚀");
+});
 
 /**
  * Firebase is disabled for now - private key appears corrupted
@@ -70,14 +74,14 @@ global.is_firebase_enabled = false;
  * 2. Check if user exists in PostgreSQL [cite: 9]
  * 3. If not, create new record with the chosen role [cite: 10]
  */
-app.post('/auth/me', verifyFirebaseToken, async (req, res) => {
+app.post("/auth/me", verifyFirebaseToken, async (req, res) => {
   const { role, phone } = req.body || {};
 
   try {
-    console.log('Auth/me called with req.user:', req.user);
-    
+    console.log("Auth/me called with req.user:", req.user);
+
     if (!req.user || !req.user.firebase_uid) {
-      return res.status(400).json({ error: 'Invalid user data' });
+      return res.status(400).json({ error: "Invalid user data" });
     }
 
     // Use upsert to update if exists, create if doesn't
@@ -85,22 +89,24 @@ app.post('/auth/me', verifyFirebaseToken, async (req, res) => {
       where: { firebase_uid: req.user.firebase_uid },
       update: {
         email: req.user.email,
-        phone: phone || undefined
+        phone: phone || undefined,
       },
       create: {
         firebase_uid: req.user.firebase_uid,
         email: req.user.email,
         phone: phone || null,
-        role: role || 'USER'
-      }
+        role: role || "USER",
+      },
     });
 
-    console.log('✓ User synced to PostgreSQL:', user.email);
+    console.log("✓ User synced to PostgreSQL:", user.email);
     res.status(200).json(user);
   } catch (error) {
     console.error("Database Sync Error:", error.message);
     console.error("Full error:", error);
-    res.status(500).json({ error: 'Failed to sync with PostgreSQL: ' + error.message });
+    res
+      .status(500)
+      .json({ error: "Failed to sync with PostgreSQL: " + error.message });
   }
 });
 
@@ -115,11 +121,11 @@ function generateOTP() {
  * POST /auth/send-otp
  * Generate and send OTP email to user
  */
-app.post('/auth/send-otp', async (req, res) => {
+app.post("/auth/send-otp", async (req, res) => {
   const { email } = req.body;
 
   if (!email) {
-    return res.status(400).json({ error: 'Email is required' });
+    return res.status(400).json({ error: "Email is required" });
   }
 
   try {
@@ -128,7 +134,7 @@ app.post('/auth/send-otp', async (req, res) => {
 
     // Find or create user with OTP
     let user = await prisma.user.findUnique({
-      where: { email }
+      where: { email },
     });
 
     if (!user) {
@@ -137,28 +143,28 @@ app.post('/auth/send-otp', async (req, res) => {
           email,
           firebase_uid: `temp_${Date.now()}`, // Temp UID until Firebase signup
           otp_code: otp,
-          otp_expiry: expiryTime
-        }
+          otp_expiry: expiryTime,
+        },
       });
     } else {
       user = await prisma.user.update({
         where: { email },
         data: {
           otp_code: otp,
-          otp_expiry: expiryTime
-        }
+          otp_expiry: expiryTime,
+        },
       });
     }
 
     // Send OTP via email
     try {
-      console.log(`📧 Attempting to send OTP to ${email} using ${process.env.EMAIL_USER}`);
-      console.log(`📧 Transporter config - User: ${process.env.EMAIL_USER}, Password: ${process.env.EMAIL_PASS ? '***' + process.env.EMAIL_PASS.slice(-4) : 'NOT SET'}`);
-      
+      console.log(
+        `📧 Attempting to send OTP to ${email} using ${process.env.EMAIL_USER}`
+      );
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
         to: email,
-        subject: '🔐 Your Email Verification OTP - Consultation Platform',
+        subject: "🔐 Your Email Verification OTP - Consultation Platform",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
             <h2>Email Verification</h2>
@@ -167,7 +173,7 @@ app.post('/auth/send-otp', async (req, res) => {
             <p style="color: #999;">This OTP will expire in 10 minutes.</p>
             <p style="color: #999;">Do not share this code with anyone.</p>
           </div>
-        `
+        `,
       });
       console.log(`✓ OTP email sent to ${email}. OTP: ${otp}`);
     } catch (emailError) {
@@ -177,14 +183,13 @@ app.post('/auth/send-otp', async (req, res) => {
       console.log(`📝 For testing - OTP is: ${otp}`);
     }
 
-
-    res.status(200).json({ 
-      message: 'OTP sent successfully',
-      email: email 
+    res.status(200).json({
+      message: "OTP sent successfully",
+      email: email,
     });
   } catch (error) {
-    console.error('❌ OTP Send Error:', error.message);
-    res.status(500).json({ error: 'Failed to send OTP: ' + error.message });
+    console.error("❌ OTP Send Error:", error.message);
+    res.status(500).json({ error: "Failed to send OTP: " + error.message });
   }
 });
 
@@ -192,30 +197,30 @@ app.post('/auth/send-otp', async (req, res) => {
  * POST /auth/verify-otp
  * Verify OTP code entered by user
  */
-app.post('/auth/verify-otp', async (req, res) => {
+app.post("/auth/verify-otp", async (req, res) => {
   const { email, otp } = req.body;
 
   if (!email || !otp) {
-    return res.status(400).json({ error: 'Email and OTP are required' });
+    return res.status(400).json({ error: "Email and OTP are required" });
   }
 
   try {
     const user = await prisma.user.findUnique({
-      where: { email }
+      where: { email },
     });
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
     }
 
     // Check OTP validity
     if (user.otp_code !== otp) {
-      return res.status(401).json({ error: 'Invalid OTP' });
+      return res.status(401).json({ error: "Invalid OTP" });
     }
 
     // Check OTP expiry
     if (new Date() > user.otp_expiry) {
-      return res.status(401).json({ error: 'OTP expired' });
+      return res.status(401).json({ error: "OTP expired" });
     }
 
     // Mark email as verified and clear OTP
@@ -224,17 +229,17 @@ app.post('/auth/verify-otp', async (req, res) => {
       data: {
         is_verified: true,
         otp_code: null,
-        otp_expiry: null
-      }
+        otp_expiry: null,
+      },
     });
 
-    res.status(200).json({ 
-      message: 'Email verified successfully',
-      user: verifiedUser 
+    res.status(200).json({
+      message: "Email verified successfully",
+      user: verifiedUser,
     });
   } catch (error) {
-    console.error('OTP Verification Error:', error);
-    res.status(500).json({ error: 'Failed to verify OTP' });
+    console.error("OTP Verification Error:", error);
+    res.status(500).json({ error: "Failed to verify OTP" });
   }
 });
 
@@ -242,17 +247,19 @@ app.post('/auth/verify-otp', async (req, res) => {
  * POST /consultant/register
  * Create a new consultant profile
  */
-app.post('/consultant/register', verifyFirebaseToken, async (req, res) => {
+app.post("/consultant/register", verifyFirebaseToken, async (req, res) => {
   const { type, domain, bio, languages, hourly_price } = req.body;
 
   try {
     if (!domain || !hourly_price) {
-      return res.status(400).json({ error: 'Domain and hourly_price are required' });
+      return res
+        .status(400)
+        .json({ error: "Domain and hourly_price are required" });
     }
 
     // Ensure user exists - try by firebase_uid first, then create if not found
     let user = await prisma.user.findUnique({
-      where: { firebase_uid: req.user.firebase_uid }
+      where: { firebase_uid: req.user.firebase_uid },
     });
 
     if (!user) {
@@ -260,14 +267,14 @@ app.post('/consultant/register', verifyFirebaseToken, async (req, res) => {
       // Otherwise create a new user
       try {
         user = await prisma.user.findUnique({
-          where: { email: req.user.email }
+          where: { email: req.user.email },
         });
-        
+
         if (user && !user.firebase_uid) {
           // Update existing user with firebase_uid
           user = await prisma.user.update({
             where: { email: req.user.email },
-            data: { firebase_uid: req.user.firebase_uid }
+            data: { firebase_uid: req.user.firebase_uid },
           });
         } else if (!user) {
           // Create new user
@@ -275,20 +282,20 @@ app.post('/consultant/register', verifyFirebaseToken, async (req, res) => {
             data: {
               firebase_uid: req.user.firebase_uid,
               email: req.user.email,
-              role: 'CONSULTANT'
-            }
+              role: "CONSULTANT",
+            },
           });
         }
       } catch (err) {
         // If any error, try to get the user again
         user = await prisma.user.findUnique({
-          where: { firebase_uid: req.user.firebase_uid }
+          where: { firebase_uid: req.user.firebase_uid },
         });
       }
     }
 
     if (!user) {
-      return res.status(404).json({ error: 'Could not create or find user' });
+      return res.status(404).json({ error: "Could not create or find user" });
     }
 
     // Delete existing consultant profile if any (clean slate)
@@ -300,20 +307,22 @@ app.post('/consultant/register', verifyFirebaseToken, async (req, res) => {
     const consultant = await prisma.consultant.create({
       data: {
         userId: user.id,
-        type: type || 'Individual',
+        type: type || "Individual",
         domain,
         bio: bio || null,
         languages: languages || null,
         hourly_price: parseFloat(hourly_price),
-        is_verified: false // Admin needs to verify
-      }
+        is_verified: false, // Admin needs to verify
+      },
     });
 
     console.log(`✓ Consultant profile created for user ${user.email}`);
     res.status(201).json(consultant);
   } catch (error) {
-    console.error('Consultant Registration Error:', error.message);
-    res.status(500).json({ error: 'Failed to create consultant profile: ' + error.message });
+    console.error("Consultant Registration Error:", error.message);
+    res
+      .status(500)
+      .json({ error: "Failed to create consultant profile: " + error.message });
   }
 });
 
@@ -321,25 +330,25 @@ app.post('/consultant/register', verifyFirebaseToken, async (req, res) => {
  * GET /consultant/profile
  * Get current user's consultant profile
  */
-app.get('/consultant/profile', verifyFirebaseToken, async (req, res) => {
+app.get("/consultant/profile", verifyFirebaseToken, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { firebase_uid: req.user.firebase_uid },
-      include: { consultant: true }
+      include: { consultant: true },
     });
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
     }
 
     if (!user.consultant) {
-      return res.status(404).json({ error: 'Consultant profile not found' });
+      return res.status(404).json({ error: "Consultant profile not found" });
     }
 
     res.status(200).json(user.consultant);
   } catch (error) {
-    console.error('Get Consultant Error:', error.message);
-    res.status(500).json({ error: 'Failed to fetch consultant profile' });
+    console.error("Get Consultant Error:", error.message);
+    res.status(500).json({ error: "Failed to fetch consultant profile" });
   }
 });
 
@@ -347,21 +356,21 @@ app.get('/consultant/profile', verifyFirebaseToken, async (req, res) => {
  * PUT /consultant/profile
  * Update consultant profile
  */
-app.put('/consultant/profile', verifyFirebaseToken, async (req, res) => {
+app.put("/consultant/profile", verifyFirebaseToken, async (req, res) => {
   const { type, domain, bio, languages, hourly_price } = req.body;
 
   try {
     const user = await prisma.user.findUnique({
       where: { firebase_uid: req.user.firebase_uid },
-      include: { consultant: true }
+      include: { consultant: true },
     });
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
     }
 
     if (!user.consultant) {
-      return res.status(404).json({ error: 'Consultant profile not found' });
+      return res.status(404).json({ error: "Consultant profile not found" });
     }
 
     const updatedConsultant = await prisma.consultant.update({
@@ -370,16 +379,19 @@ app.put('/consultant/profile', verifyFirebaseToken, async (req, res) => {
         type: type || user.consultant.type,
         domain: domain || user.consultant.domain,
         bio: bio !== undefined ? bio : user.consultant.bio,
-        languages: languages !== undefined ? languages : user.consultant.languages,
-        hourly_price: hourly_price ? parseFloat(hourly_price) : user.consultant.hourly_price
-      }
+        languages:
+          languages !== undefined ? languages : user.consultant.languages,
+        hourly_price: hourly_price
+          ? parseFloat(hourly_price)
+          : user.consultant.hourly_price,
+      },
     });
 
     console.log(`✓ Consultant profile updated for user ${user.email}`);
     res.status(200).json(updatedConsultant);
   } catch (error) {
-    console.error('Update Consultant Error:', error.message);
-    res.status(500).json({ error: 'Failed to update consultant profile' });
+    console.error("Update Consultant Error:", error.message);
+    res.status(500).json({ error: "Failed to update consultant profile" });
   }
 });
 
@@ -440,7 +452,7 @@ app.post('/consultant/upload-profile-pic', verifyFirebaseToken, upload.single('f
  * GET /consultants
  * Get all consultants (with optional domain filter)
  */
-app.get('/consultants', async (req, res) => {
+app.get("/consultants", async (req, res) => {
   try {
     const { domain } = req.query;
 
@@ -450,31 +462,31 @@ app.get('/consultants', async (req, res) => {
         where: {
           domain: {
             contains: domain,
-            mode: 'insensitive'
+            mode: "insensitive",
           },
-          is_verified: true // Only show verified consultants
+          is_verified: true, // Only show verified consultants
         },
         include: {
           user: {
-            select: { email: true }
-          }
-        }
+            select: { email: true },
+          },
+        },
       });
     } else {
       consultants = await prisma.consultant.findMany({
         where: { is_verified: true },
         include: {
           user: {
-            select: { email: true }
-          }
-        }
+            select: { email: true },
+          },
+        },
       });
     }
 
     res.status(200).json(consultants);
   } catch (error) {
-    console.error('Get Consultants Error:', error.message);
-    res.status(500).json({ error: 'Failed to fetch consultants' });
+    console.error("Get Consultants Error:", error.message);
+    res.status(500).json({ error: "Failed to fetch consultants" });
   }
 });
 
@@ -482,7 +494,7 @@ app.get('/consultants', async (req, res) => {
  * GET /consultants/:id
  * Get single consultant details
  */
-app.get('/consultants/:id', async (req, res) => {
+app.get("/consultants/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -490,19 +502,19 @@ app.get('/consultants/:id', async (req, res) => {
       where: { id: parseInt(id) },
       include: {
         user: {
-          select: { email: true }
-        }
-      }
+          select: { email: true },
+        },
+      },
     });
 
     if (!consultant) {
-      return res.status(404).json({ error: 'Consultant not found' });
+      return res.status(404).json({ error: "Consultant not found" });
     }
 
     res.status(200).json(consultant);
   } catch (error) {
-    console.error('Get Consultant Error:', error.message);
-    res.status(500).json({ error: 'Failed to fetch consultant' });
+    console.error("Get Consultant Error:", error.message);
+    res.status(500).json({ error: "Failed to fetch consultant" });
   }
 });
 
@@ -510,20 +522,22 @@ app.get('/consultants/:id', async (req, res) => {
  * POST /bookings/create
  * Create a booking request
  */
-app.post('/bookings/create', verifyFirebaseToken, async (req, res) => {
+app.post("/bookings/create", verifyFirebaseToken, async (req, res) => {
   const { consultant_id, date, time_slot } = req.body;
 
   try {
     if (!consultant_id || !date || !time_slot) {
-      return res.status(400).json({ error: 'consultant_id, date, and time_slot are required' });
+      return res
+        .status(400)
+        .json({ error: "consultant_id, date, and time_slot are required" });
     }
 
     const user = await prisma.user.findUnique({
-      where: { firebase_uid: req.user.firebase_uid }
+      where: { firebase_uid: req.user.firebase_uid },
     });
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
     }
 
     const booking = await prisma.booking.create({
@@ -531,16 +545,20 @@ app.post('/bookings/create', verifyFirebaseToken, async (req, res) => {
         userId: user.id,
         consultantId: parseInt(consultant_id),
         date: new Date(date),
-        time_slot: time_slot || '10:00 AM',
-        status: 'PENDING'
-      }
+        time_slot: time_slot || "10:00 AM",
+        status: "PENDING",
+      },
     });
 
-    console.log(`✓ Booking created: User ${user.email} → Consultant ${consultant_id}`);
+    console.log(
+      `✓ Booking created: User ${user.email} → Consultant ${consultant_id}`
+    );
     res.status(201).json(booking);
   } catch (error) {
-    console.error('Create Booking Error:', error.message);
-    res.status(500).json({ error: 'Failed to create booking: ' + error.message });
+    console.error("Create Booking Error:", error.message);
+    res
+      .status(500)
+      .json({ error: "Failed to create booking: " + error.message });
   }
 });
 
@@ -548,14 +566,14 @@ app.post('/bookings/create', verifyFirebaseToken, async (req, res) => {
  * GET /bookings
  * Get user's bookings
  */
-app.get('/bookings', verifyFirebaseToken, async (req, res) => {
+app.get("/bookings", verifyFirebaseToken, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
-      where: { firebase_uid: req.user.firebase_uid }
+      where: { firebase_uid: req.user.firebase_uid },
     });
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
     }
 
     const bookings = await prisma.booking.findMany({
@@ -564,21 +582,85 @@ app.get('/bookings', verifyFirebaseToken, async (req, res) => {
         consultant: {
           include: {
             user: {
-              select: { email: true }
-            }
-          }
-        }
-      }
+              select: { email: true },
+            },
+          },
+        },
+      },
     });
 
     res.status(200).json(bookings);
   } catch (error) {
-    console.error('Get Bookings Error:', error.message);
-    res.status(500).json({ error: 'Failed to fetch bookings' });
+    console.error("Get Bookings Error:", error.message);
+    res.status(500).json({ error: "Failed to fetch bookings" });
   }
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+  },
+});
+
+io.on("connection", (socket) => {
+  console.log("🔌 User connected:", socket.id);
+
+  socket.on("join-booking", (bookingId) => {
+    socket.join(`booking_${bookingId}`);
+    console.log("User joined booking room:", bookingId);
+  });
+
+  socket.on("send-message", async (data) => {
+    console.log("📩 Message received:", data);
+
+    try {
+      const { bookingId, senderId, role, content } = data;
+
+      const bookingIdInt = parseInt(bookingId);
+
+      const booking = await prisma.booking.findUnique({
+        where: { id: bookingIdInt },
+      });
+
+      if (!booking) {
+        socket.emit("ERROR", { message: "Booking not found" });
+        return;
+      }
+
+      const clientMessageCount = await prisma.message.count({
+        where: {
+          bookingId: bookingIdInt,
+          senderId: booking.userId, // Only count client's messages
+        },
+      });
+      if (role === "client" && !booking.is_paid && clientMessageCount >= 5) {
+        socket.emit("PAYMENT_REQUIRED", {
+          message: "Free chat limit reached. Please complete payment.",
+        });
+        return;
+      }
+      const message = await prisma.message.create({
+        data: {
+          bookingId: bookingIdInt,
+          senderId: parseInt(senderId),
+          content,
+        },
+      });
+
+      io.to(`booking_${bookingId}`).emit("receive-message", {
+        ...message,
+        role,
+      });
+    } catch (error) {
+      console.error("Message Error:", error.message);
+    }
+  });
+
+  socket.on("disconnect", () => {
+    console.log("❌ User disconnected:", socket.id);
+  });
+});
+server.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
