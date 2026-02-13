@@ -1,0 +1,34 @@
+import { Link } from 'react-router-dom'
+import './Header.css'
+
+function Header() {
+    return (
+        <header className="header glass">
+            <div className="container">
+                <div className="header-content">
+                    <Link to="/" className="logo">
+                        <span className="logo-icon">💼</span>
+                        <span className="logo-text">ConsultHub</span>
+                    </Link>
+
+                    <nav className="nav">
+                        <Link to="/consultants" className="btn btn-secondary">
+                            Find Consultants
+                        </Link>
+                        <Link to="/consultant-profile" className="btn btn-secondary">
+                            Become Consultant
+                        </Link>
+                        <Link to="/login" className="btn btn-outline">
+                            Login
+                        </Link>
+                        <Link to="/signup" className="btn btn-primary">
+                            Signup
+                        </Link>
+                    </nav>
+                </div>
+            </div>
+        </header>
+    )
+}
+
+export default Header
