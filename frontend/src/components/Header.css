@@ -2,13 +2,13 @@
     position: sticky;
     top: 0;
     z-index: 1000;
-    background: rgba(17, 24, 39, 0.8);
+    background: rgba(15, 23, 42, 0.8);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     padding: 1rem 0;
 }
 
 .header.glass {
-    background: rgba(17, 24, 39, 0.7);
+    background: rgba(15, 23, 42, 0.7);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
 }
@@ -17,6 +17,9 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
 }
 
 .header .logo {
@@ -39,7 +42,7 @@
 }
 
 .logo-text {
-    background: linear-gradient(135deg, #2563eb, #1e40af);
+    background: linear-gradient(135deg, #60a5fa, #3b82f6);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -48,8 +51,76 @@
 .header .nav {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 2rem;
     flex-wrap: wrap;
+}
+
+.nav-link {
+    color: #cbd5e1;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #60a5fa;
+}
+
+.nav-divider {
+    width: 1px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Button Styles */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    color: white;
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.btn-outline {
+    background: transparent;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-outline:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #fff;
 }
 
 @media (max-width: 768px) {
@@ -57,11 +128,20 @@
         gap: 0.75rem;
     }
 
-    .header .logo-text {
+    .logo-text {
         display: none;
     }
 
     .header .logo {
         font-size: 1.25rem;
     }
+
+    .nav-divider {
+        display: none;
+    }
+
+    .nav-link {
+        display: none;
+    }
 }
+

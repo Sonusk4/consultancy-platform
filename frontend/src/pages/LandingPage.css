@@ -1,7 +1,97 @@
+/* CSS Variables */
+:root {
+    --primary-color: #2563eb;
+    --secondary-color: #1e40af;
+    --text-primary: #ffffff;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --bg-card: rgba(15, 23, 42, 0.5);
+    --border-color: rgba(255, 255, 255, 0.1);
+    --divider-color: rgba(255, 255, 255, 0.05);
+    
+    /* Spacing */
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-2xl: 3rem;
+    
+    /* Typography */
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.5rem;
+    --font-size-2xl: 2rem;
+    --font-size-3xl: 2.5rem;
+    --font-size-4xl: 3.5rem;
+    
+    /* Radius */
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-2xl: 20px;
+    
+    /* Transitions */
+    --transition-base: 0.3s ease-in-out;
+}
+
 .landing-page {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    color: #fff;
+    width: 100%;
+}
+
+/* Container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    width: 100%;
+}
+
+/* Cards */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: all var(--transition-base);
+}
+
+.card:hover {
+    border-color: rgba(37, 99, 235, 0.3);
+    box-shadow: 0 8px 32px rgba(37, 99, 235, 0.1);
+}
+
+.card-interactive {
+    cursor: pointer;
+}
+
+.card-interactive:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(37, 99, 235, 0.15);
+}
+
+/* Section Header */
+.section-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.heading-2 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 800;
+    margin-bottom: var(--spacing-md);
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 /* Hero Section */
@@ -13,6 +103,13 @@
     justify-content: center;
     padding: 8rem 0 4rem;
     overflow: hidden;
+}
+
+.hero-section .container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
 }
 
 .hero-background {
@@ -175,24 +272,25 @@
 
 /* Category Section */
 .category-section {
-    padding: var(--spacing-2xl) 0;
-}
-
-.section-header {
-    text-align: center;
-    margin-bottom: var(--spacing-xl);
+    padding: 4rem 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .section-description {
     font-size: var(--font-size-lg);
     color: var(--text-secondary);
     margin-top: var(--spacing-sm);
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .categories-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: var(--spacing-lg);
+    gap: 2rem;
+    row-gap: 2.5rem;
 }
 
 .category-card {
@@ -200,6 +298,23 @@
     text-align: center;
     animation: fadeInUp 0.6s ease-out forwards;
     opacity: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: auto;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: all var(--transition-base);
+}
+
+.category-card:hover {
+    border-color: rgba(37, 99, 235, 0.3);
+    box-shadow: 0 8px 32px rgba(37, 99, 235, 0.1);
+    transform: translateY(-5px);
 }
 
 .category-icon {
@@ -222,8 +337,9 @@
 
 .category-description {
     color: var(--text-secondary);
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
     line-height: 1.6;
+    flex-grow: 1;
 }
 
 .category-meta {
@@ -231,7 +347,8 @@
     align-items: center;
     justify-content: space-between;
     padding-top: var(--spacing-md);
-    border-top: 1px solid var(--divider-color);
+    border-top: 1px solid var(--border-color);
+    width: 100%;
 }
 
 .consultant-count {
@@ -255,19 +372,25 @@
 
 /* Features Section */
 .features-section {
-    padding: var(--spacing-2xl) 0;
+    padding: 4rem 0;
     background: var(--bg-secondary);
 }
 
 .features-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: var(--spacing-lg);
+    gap: 2rem;
+    row-gap: 2rem;
 }
 
 .feature-card {
     text-align: center;
     padding: var(--spacing-xl);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: auto;
 }
 
 .feature-icon {
@@ -279,7 +402,7 @@
 .feature-title {
     font-size: var(--font-size-xl);
     font-weight: 600;
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
 }
 
 .feature-description {
@@ -289,13 +412,19 @@
 
 /* CTA Section */
 .cta-section {
-    padding: var(--spacing-2xl) 0;
+    padding: 4rem 0;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(30, 64, 175, 0.05));
+    border-top: 1px solid var(--border-color);
 }
 
 .cta-card {
     text-align: center;
-    padding: var(--spacing-2xl);
+    padding: var(--spacing-2xl) var(--spacing-xl);
     border-radius: var(--radius-xl);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .cta-title {
@@ -321,6 +450,14 @@
     flex-wrap: wrap;
 }
 
+/* Utility Classes */
+.glass {
+    background: rgba(15, 23, 42, 0.5) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+}
+
 /* Animations */
 @keyframes fadeInUp {
     from {
@@ -333,14 +470,6 @@
     }
 }
 
-.animate-fade-in {
-    animation: fadeIn 0.6s ease-out;
-}
-
-.animate-fade-in-up {
-    animation: fadeInUp 0.6s ease-out;
-}
-
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -348,6 +477,14 @@
     to {
         opacity: 1;
     }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.6s ease-out;
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
 }
 
 /* Responsive */

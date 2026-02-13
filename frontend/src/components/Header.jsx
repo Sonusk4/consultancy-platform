@@ -12,17 +12,18 @@ function Header() {
                     </Link>
 
                     <nav className="nav">
-                        <Link to="/consultants" className="btn btn-secondary">
+                        <Link to="/consultants" className="nav-link">
                             Find Consultants
                         </Link>
-                        <Link to="/consultant-profile" className="btn btn-secondary">
+                        <Link to="/consultant-profile" className="nav-link">
                             Become Consultant
                         </Link>
-                        <Link to="/login" className="btn btn-outline">
+                        <div className="nav-divider"></div>
+                        <Link to="/login" className="btn btn-secondary">
                             Login
                         </Link>
                         <Link to="/signup" className="btn btn-primary">
-                            Signup
+                            Sign Up
                         </Link>
                     </nav>
                 </div>

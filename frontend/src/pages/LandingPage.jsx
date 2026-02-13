@@ -28,6 +28,54 @@ function LandingPage() {
             description: 'Career coaches to guide your professional journey',
             consultants: '600+',
             color: '#f093fb'
+        },
+        {
+            id: 4,
+            title: 'Health',
+            icon: '🏥',
+            description: 'Health professionals and wellness experts',
+            consultants: '450+',
+            color: '#f87171'
+        },
+        {
+            id: 5,
+            title: 'Technology',
+            icon: '💻',
+            description: 'Tech specialists and IT consultants',
+            consultants: '820+',
+            color: '#3b82f6'
+        },
+        {
+            id: 6,
+            title: 'Marketing',
+            icon: '📱',
+            description: 'Marketing strategists and digital experts',
+            consultants: '580+',
+            color: '#10b981'
+        },
+        {
+            id: 7,
+            title: 'Education',
+            icon: '📚',
+            description: 'Academic advisors and learning specialists',
+            consultants: '420+',
+            color: '#f59e0b'
+        },
+        {
+            id: 8,
+            title: 'Real Estate',
+            icon: '🏠',
+            description: 'Property experts and real estate advisors',
+            consultants: '380+',
+            color: '#ec4899'
+        },
+        {
+            id: 9,
+            title: 'HR & Management',
+            icon: '👥',
+            description: 'HR professionals and business managers',
+            consultants: '540+',
+            color: '#06b6d4'
         }
     ]
 
