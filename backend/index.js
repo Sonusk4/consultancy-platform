@@ -52,39 +52,36 @@ global.is_firebase_enabled = false;
  * 3. If not, create new record with the chosen role [cite: 10]
  */
 app.post('/auth/me', verifyFirebaseToken, async (req, res) => {
-  const { role, phone } = req.body; 
+  const { role, phone } = req.body || {};
 
   try {
-    // Check if user exists [cite: 9]
-    let user = await prisma.user.findUnique({
-      where: { firebase_uid: req.user.firebase_uid }
-    });
-
-    // If not, create new record with default role USER [cite: 10]
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          firebase_uid: req.user.firebase_uid,
-          email: req.user.email,
-          phone: phone || null,
-          role: role || 'USER' // Roles are stored only in DB [cite: 11]
-        }
-      });
-      console.log('Successfully synced new user to PostgreSQL:', user.email);
-    } else {
-      // Update phone if provided
-      if (phone) {
-        user = await prisma.user.update({
-          where: { firebase_uid: req.user.firebase_uid },
-          data: { phone }
-        });
-      }
+    console.log('Auth/me called with req.user:', req.user);
+    
+    if (!req.user || !req.user.firebase_uid) {
+      return res.status(400).json({ error: 'Invalid user data' });
     }
 
+    // Use upsert to update if exists, create if doesn't
+    let user = await prisma.user.upsert({
+      where: { firebase_uid: req.user.firebase_uid },
+      update: {
+        email: req.user.email,
+        phone: phone || undefined
+      },
+      create: {
+        firebase_uid: req.user.firebase_uid,
+        email: req.user.email,
+        phone: phone || null,
+        role: role || 'USER'
+      }
+    });
+
+    console.log('✓ User synced to PostgreSQL:', user.email);
     res.status(200).json(user);
   } catch (error) {
-    console.error("Database Sync Error:", error);
-    res.status(500).json({ error: 'Failed to sync with PostgreSQL' });
+    console.error("Database Sync Error:", error.message);
+    console.error("Full error:", error);
+    res.status(500).json({ error: 'Failed to sync with PostgreSQL: ' + error.message });
   }
 });
 
@@ -217,7 +214,287 @@ app.post('/auth/verify-otp', async (req, res) => {
   }
 });
 
+/**
+ * POST /consultant/register
+ * Create a new consultant profile
+ */
+app.post('/consultant/register', verifyFirebaseToken, async (req, res) => {
+  const { type, domain, bio, languages, hourly_price } = req.body;
 
+  try {
+    if (!domain || !hourly_price) {
+      return res.status(400).json({ error: 'Domain and hourly_price are required' });
+    }
+
+    // Ensure user exists - try by firebase_uid first, then create if not found
+    let user = await prisma.user.findUnique({
+      where: { firebase_uid: req.user.firebase_uid }
+    });
+
+    if (!user) {
+      // If not found by firebase_uid, try to find by email and link them
+      // Otherwise create a new user
+      try {
+        user = await prisma.user.findUnique({
+          where: { email: req.user.email }
+        });
+        
+        if (user && !user.firebase_uid) {
+          // Update existing user with firebase_uid
+          user = await prisma.user.update({
+            where: { email: req.user.email },
+            data: { firebase_uid: req.user.firebase_uid }
+          });
+        } else if (!user) {
+          // Create new user
+          user = await prisma.user.create({
+            data: {
+              firebase_uid: req.user.firebase_uid,
+              email: req.user.email,
+              role: 'CONSULTANT'
+            }
+          });
+        }
+      } catch (err) {
+        // If any error, try to get the user again
+        user = await prisma.user.findUnique({
+          where: { firebase_uid: req.user.firebase_uid }
+        });
+      }
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: 'Could not create or find user' });
+    }
+
+    // Create consultant profile
+    const consultant = await prisma.consultant.create({
+      data: {
+        userId: user.id,
+        type: type || 'Individual',
+        domain,
+        bio: bio || null,
+        languages: languages || null,
+        hourly_price: parseFloat(hourly_price),
+        is_verified: false // Admin needs to verify
+      }
+    });
+
+    console.log(`✓ Consultant profile created for user ${user.email}`);
+    res.status(201).json(consultant);
+  } catch (error) {
+    console.error('Consultant Registration Error:', error.message);
+    res.status(500).json({ error: 'Failed to create consultant profile: ' + error.message });
+  }
+});
+
+/**
+ * GET /consultant/profile
+ * Get current user's consultant profile
+ */
+app.get('/consultant/profile', verifyFirebaseToken, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { firebase_uid: req.user.firebase_uid },
+      include: { consultant: true }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (!user.consultant) {
+      return res.status(404).json({ error: 'Consultant profile not found' });
+    }
+
+    res.status(200).json(user.consultant);
+  } catch (error) {
+    console.error('Get Consultant Error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch consultant profile' });
+  }
+});
+
+/**
+ * PUT /consultant/profile
+ * Update consultant profile
+ */
+app.put('/consultant/profile', verifyFirebaseToken, async (req, res) => {
+  const { type, domain, bio, languages, hourly_price } = req.body;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { firebase_uid: req.user.firebase_uid },
+      include: { consultant: true }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (!user.consultant) {
+      return res.status(404).json({ error: 'Consultant profile not found' });
+    }
+
+    const updatedConsultant = await prisma.consultant.update({
+      where: { id: user.consultant.id },
+      data: {
+        type: type || user.consultant.type,
+        domain: domain || user.consultant.domain,
+        bio: bio !== undefined ? bio : user.consultant.bio,
+        languages: languages !== undefined ? languages : user.consultant.languages,
+        hourly_price: hourly_price ? parseFloat(hourly_price) : user.consultant.hourly_price
+      }
+    });
+
+    console.log(`✓ Consultant profile updated for user ${user.email}`);
+    res.status(200).json(updatedConsultant);
+  } catch (error) {
+    console.error('Update Consultant Error:', error.message);
+    res.status(500).json({ error: 'Failed to update consultant profile' });
+  }
+});
+
+/**
+ * GET /consultants
+ * Get all consultants (with optional domain filter)
+ */
+app.get('/consultants', async (req, res) => {
+  try {
+    const { domain } = req.query;
+
+    let consultants;
+    if (domain) {
+      consultants = await prisma.consultant.findMany({
+        where: {
+          domain: {
+            contains: domain,
+            mode: 'insensitive'
+          },
+          is_verified: true // Only show verified consultants
+        },
+        include: {
+          user: {
+            select: { email: true }
+          }
+        }
+      });
+    } else {
+      consultants = await prisma.consultant.findMany({
+        where: { is_verified: true },
+        include: {
+          user: {
+            select: { email: true }
+          }
+        }
+      });
+    }
+
+    res.status(200).json(consultants);
+  } catch (error) {
+    console.error('Get Consultants Error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch consultants' });
+  }
+});
+
+/**
+ * GET /consultants/:id
+ * Get single consultant details
+ */
+app.get('/consultants/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const consultant = await prisma.consultant.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        user: {
+          select: { email: true }
+        }
+      }
+    });
+
+    if (!consultant) {
+      return res.status(404).json({ error: 'Consultant not found' });
+    }
+
+    res.status(200).json(consultant);
+  } catch (error) {
+    console.error('Get Consultant Error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch consultant' });
+  }
+});
+
+/**
+ * POST /bookings/create
+ * Create a booking request
+ */
+app.post('/bookings/create', verifyFirebaseToken, async (req, res) => {
+  const { consultant_id, date, time_slot } = req.body;
+
+  try {
+    if (!consultant_id || !date || !time_slot) {
+      return res.status(400).json({ error: 'consultant_id, date, and time_slot are required' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { firebase_uid: req.user.firebase_uid }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const booking = await prisma.booking.create({
+      data: {
+        userId: user.id,
+        consultantId: parseInt(consultant_id),
+        date: new Date(date),
+        time_slot: time_slot || '10:00 AM',
+        status: 'PENDING'
+      }
+    });
+
+    console.log(`✓ Booking created: User ${user.email} → Consultant ${consultant_id}`);
+    res.status(201).json(booking);
+  } catch (error) {
+    console.error('Create Booking Error:', error.message);
+    res.status(500).json({ error: 'Failed to create booking: ' + error.message });
+  }
+});
+
+/**
+ * GET /bookings
+ * Get user's bookings
+ */
+app.get('/bookings', verifyFirebaseToken, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { firebase_uid: req.user.firebase_uid }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const bookings = await prisma.booking.findMany({
+      where: { userId: user.id },
+      include: {
+        consultant: {
+          include: {
+            user: {
+              select: { email: true }
+            }
+          }
+        }
+      }
+    });
+
+    res.status(200).json(bookings);
+  } catch (error) {
+    console.error('Get Bookings Error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch bookings' });
+  }
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

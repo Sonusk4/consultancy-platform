@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
+import { useNavigate } from 'react-router-dom';
 import OTPVerification from './OTPVerification';
 
 const Signup = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
@@ -64,9 +66,18 @@ const Signup = () => {
 
       const data = await response.json();
       console.log("User created:", data);
-      alert('✓ Signup successful! Email verified. You can now login.');
+      alert('✓ Signup successful! Email verified.');
       
-      // Reset form and go back to signup
+      // Redirect based on role
+      if (role === 'CONSULTANT') {
+        // Consultant - go to profile creation page
+        navigate('/consultant-profile');
+      } else {
+        // Regular user - go to home or consultant listing
+        navigate('/consultants');
+      }
+      
+      // Reset form
       setStep('signup');
       setEmail('');
       setPassword('');

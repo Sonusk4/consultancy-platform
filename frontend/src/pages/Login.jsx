@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
+import { useNavigate } from 'react-router-dom';
 import OTPVerification from './OTPVerification';
 
 const Login = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -40,7 +42,36 @@ const Login = () => {
       } else {
         // Email is verified, login successful
         console.log("Logged in user:", userData);
-        alert(`✓ Welcome back! You are logged in as ${userData.role}`);
+        alert(`✓ Welcome back!`);
+        
+        // Check if user is a consultant with a profile
+        try {
+          const token = await user.getIdToken();
+          const consultantRes = await fetch('http://localhost:5000/consultant/profile', {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (consultantRes.ok) {
+            // Consultant profile exists, redirect to consultant page
+            navigate('/consultant-profile');
+          } else {
+            // No consultant profile, check if they want to become a consultant
+            const isConsultant = userData.role === 'CONSULTANT';
+            if (isConsultant) {
+              navigate('/consultant-profile');
+            } else {
+              navigate('/');
+            }
+          }
+        } catch (error) {
+          // Error checking consultant profile, go to home
+          navigate('/');
+        }
+        
         // Reset form
         setEmail('');
         setPassword('');
@@ -64,9 +95,34 @@ const Login = () => {
 
       const userData = await response.json();
       console.log("User verified and logged in:", userData);
-      alert(`✓ Email verified! Welcome ${userData.role}`);
+      alert(`✓ Email verified! Welcome`);
       
-      // Reset and go back to login
+      // Check if user is a consultant with a profile
+      try {
+        const consultantRes = await fetch('http://localhost:5000/consultant/profile', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (consultantRes.ok) {
+          // Consultant profile exists, redirect to consultant page
+          navigate('/consultant-profile');
+        } else {
+          // No consultant profile, go to home
+          if (userData.role === 'CONSULTANT') {
+            navigate('/consultant-profile');
+          } else {
+            navigate('/');
+          }
+        }
+      } catch (error) {
+        // Error checking consultant profile, go to home
+        navigate('/');
+      }
+      
       setStep('login');
       setEmail('');
       setPassword('');
