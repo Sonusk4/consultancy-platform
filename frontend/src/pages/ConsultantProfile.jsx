@@ -16,15 +16,25 @@ const ConsultantProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [profilePicPreview, setProfilePicPreview] = useState(null);
+  const [pageLoading, setPageLoading] = useState(true);
 
   useEffect(() => {
-    fetchConsultantProfile();
+    loadProfile();
   }, []);
+
+  const loadProfile = async () => {
+    setPageLoading(true);
+    await fetchConsultantProfile();
+    setPageLoading(false);
+  };
 
   const fetchConsultantProfile = async () => {
     try {
       const user = auth.currentUser;
-      if (!user) return;
+      if (!user) {
+        console.log('No user logged in');
+        return;
+      }
 
       const token = await user.getIdToken();
       const response = await fetch('http://localhost:5000/consultant/profile', {
@@ -37,9 +47,15 @@ const ConsultantProfile = () => {
 
       if (response.status === 200) {
         const data = await response.json();
+        console.log('Profile loaded:', data);
         setConsultantData(data);
         if (data.profile_pic) setProfilePicPreview(data.profile_pic);
         setIsEditing(true);
+        setSuccess('✓ Profile loaded successfully');
+        setTimeout(() => setSuccess(''), 2000);
+      } else if (response.status === 404) {
+        console.log('No profile created yet');
+        setIsEditing(false);
       }
     } catch (err) {
       console.error('Error fetching profile:', err);
@@ -164,9 +180,31 @@ const ConsultantProfile = () => {
 
   return (
     <div className="login-container">
-      <h2>👨‍💼 {isEditing ? 'Update' : 'Create'} Consultant Profile</h2>
-      
-      {/* Profile Picture Section */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h2>👨‍💼 {isEditing ? 'Update' : 'Create'} Consultant Profile</h2>
+        <button 
+          onClick={loadProfile} 
+          style={{ 
+            padding: '8px 12px', 
+            backgroundColor: '#2563eb', 
+            color: 'white', 
+            border: 'none', 
+            borderRadius: '4px', 
+            cursor: 'pointer',
+            fontSize: '12px'
+          }}
+          disabled={pageLoading}
+        >
+          {pageLoading ? '⟳ Loading...' : '🔄 Refresh'}
+        </button>
+      </div>
+
+      {pageLoading ? (
+        <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
+          <p>📊 Loading your profile...</p>
+        </div>
+      ) : (
+        <>
       <div className="profile-pic-section" style={styles.profilePicSection}>
         <div style={styles.profilePicContainer}>
           {profilePicPreview ? (
@@ -264,6 +302,8 @@ const ConsultantProfile = () => {
         <p><strong>💡 Tip:</strong> Complete your profile to start receiving consultation requests from clients!</p>
         {isEditing && <p style={{ marginTop: '10px', color: '#90ee90' }}>✓ Your profile is active and visible to clients</p>}
       </div>
+        </>
+      )}
     </div>
   );
 };
