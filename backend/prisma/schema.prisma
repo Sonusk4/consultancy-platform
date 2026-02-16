@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -29,6 +30,7 @@ model Consultant {
   domain        String?
   bio           String?
   languages     String?
+  profile_pic   String?        // Cloudinary image URL
   hourly_price  Float?
   rating        Float          @default(0)
   total_reviews Int            @default(0)
