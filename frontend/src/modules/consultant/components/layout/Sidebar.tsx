@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { 
@@ -15,7 +16,8 @@ import {
   TrendingUp,
   Building2,
   X,
-  CalendarDays
+  CalendarDays,
+  ChevronLeft
 } from 'lucide-react';
 import { useConsultantRole } from '../../hooks/useConsultantRole';
 
@@ -48,7 +50,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   );
 
   return (
-    <aside className="w-64 bg-white border-r border-slate-200 flex flex-col h-full overflow-hidden">
+    <aside className="w-64 bg-white flex flex-col h-full overflow-hidden">
       <div className="p-6 border-b border-slate-100 flex items-center justify-between">
         <div className="flex items-center gap-2 overflow-hidden">
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shrink-0">
@@ -58,10 +60,10 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
         </div>
         <button 
           onClick={onClose} 
-          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-          title="Close Sidebar"
+          className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors group"
+          title="Collapse Sidebar"
         >
-          <X size={20} />
+          <ChevronLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
         </button>
       </div>
 

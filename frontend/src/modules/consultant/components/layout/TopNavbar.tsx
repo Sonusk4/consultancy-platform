@@ -17,11 +17,13 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ onMenuClick }) => {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 px-4 md:px-6 flex items-center justify-between sticky top-0 z-10">
+    <header className="h-16 bg-white border-b border-slate-200 px-4 md:px-6 flex items-center justify-between sticky top-0 z-10 shrink-0">
       <div className="flex items-center gap-4 flex-1">
+        {/* Toggle Button - Now visible on all screens */}
         <button 
           onClick={onMenuClick}
-          className="md:hidden p-2 text-slate-500 hover:bg-slate-50 rounded-lg"
+          className="p-2 text-slate-500 hover:bg-slate-50 hover:text-indigo-600 rounded-lg transition-all active:scale-95 border border-transparent hover:border-slate-200"
+          title="Toggle Sidebar"
         >
           <Menu size={20} />
         </button>
