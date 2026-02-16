@@ -14,7 +14,7 @@ export const MOCK_CONSULTANT: ConsultantProfile = {
   rating: 4.9,
   totalReviews: 124,
   profileImage: 'https://picsum.photos/seed/alex/200/200',
-  languages: ['English', 'Hindi', 'Spanish'],
+  languages: ['English', 'Hindi', 'Kannada'],
   status: RegistrationStatus.APPROVED,
   completionPercentage: 85
 };

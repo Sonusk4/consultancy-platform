@@ -15,8 +15,6 @@ import {
   Settings,
   TrendingUp,
   Building2,
-  X,
-  CalendarDays,
   ChevronLeft
 } from 'lucide-react';
 import { useConsultantRole } from '../../hooks/useConsultantRole';
@@ -56,7 +54,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shrink-0">
             <BookOpen className="text-white" size={18} />
           </div>
-          <span className="text-xl font-bold text-slate-900 tracking-tight">ConsultantHub</span>
+          <span className="text-xl font-bold text-slate-900 tracking-tight">ConsultantPro</span>
         </div>
         <button 
           onClick={onClose} 
@@ -76,7 +74,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
             <NavItem to="/profile" icon={UserCircle} label="Profile" />
             <NavItem to="/availability" icon={Calendar} label="Availability" />
             <NavItem to="/bookings" icon={BookOpen} label="Bookings" />
-            <NavItem to="/calendar" icon={CalendarDays} label="Calendar Review" />
             <NavItem to="/earnings" icon={DollarSign} label="Earnings" />
             <NavItem to="/reviews" icon={Star} label="Reviews" />
           </>
@@ -87,7 +84,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
             <NavItem to="/profile" icon={Building2} label="Company Profile" />
             <NavItem to="/team" icon={Users} label="Team Management" />
             <NavItem to="/bookings" icon={BookOpen} label="Bookings" />
-            <NavItem to="/calendar" icon={CalendarDays} label="Calendar Review" />
             <NavItem to="/earnings" icon={DollarSign} label="Earnings" />
             <NavItem to="/analytics" icon={TrendingUp} label="Analytics" />
             <NavItem to="/settings" icon={Settings} label="Enterprise Settings" />
@@ -99,7 +95,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
             <NavItem to="/profile" icon={UserCircle} label="My Profile" />
             <NavItem to="/availability" icon={Calendar} label="My Availability" />
             <NavItem to="/bookings" icon={BookOpen} label="My Bookings" />
-            <NavItem to="/calendar" icon={CalendarDays} label="Calendar Review" />
             <NavItem to="/earnings" icon={DollarSign} label="My Earnings" />
             <NavItem to="/reviews" icon={Star} label="Reviews" />
           </>

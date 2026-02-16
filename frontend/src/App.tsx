@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import ConsultantTypeSelection from './modules/consultant/pages/ConsultantTypeSelection';
@@ -10,7 +11,6 @@ import ProfilePage from './modules/consultant/pages/ProfilePage';
 import AvailabilityPage from './modules/consultant/pages/AvailabilityPage';
 import AddTimeSlotPage from './modules/consultant/pages/AddTimeSlotPage';
 import BookingsPage from './modules/consultant/pages/BookingsPage';
-import CalendarReviewPage from './modules/consultant/pages/CalendarReviewPage';
 import EarningsPage from './modules/consultant/pages/EarningsPage';
 import ReviewsPage from './modules/consultant/pages/ReviewsPage';
 import TeamManagementPage from './modules/consultant/pages/TeamManagementPage';
@@ -54,7 +54,6 @@ const App: React.FC = () => {
             <Route path="/availability" element={<AvailabilityPage />} />
             <Route path="/availability/add" element={<AddTimeSlotPage />} />
             <Route path="/bookings" element={<BookingsPage />} />
-            <Route path="/calendar" element={<CalendarReviewPage />} />
             <Route path="/earnings" element={<EarningsPage />} />
             <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/team" element={<TeamManagementPage />} />
