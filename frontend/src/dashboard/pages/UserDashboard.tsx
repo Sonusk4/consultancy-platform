@@ -4,40 +4,75 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Play, 
   ArrowRight, 
-  TrendingUp, 
   Wallet, 
   Award, 
   Calendar,
   Star,
   CheckCircle2,
-  AlertCircle,
   MessageSquare,
   Plus,
   Clock,
-  Bell,
   History,
-  CheckCircle,
   CreditCard,
-  Search
+  Search,
+  Video,
+  Mic,
+  XCircle,
+  MoreHorizontal,
+  ChevronRight
 } from 'lucide-react';
-import { currentUser, mockSessions, consultants, mockTransactions } from '../data/mockData';
+import { currentUser, mockSessions, consultants } from '../data/mockData';
 
 const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
   const liveSession = mockSessions.find(s => s.status === 'live');
   const upcomingSessions = mockSessions.filter(s => s.status === 'upcoming');
+  
+  const todayDate = new Date().toLocaleDateString('en-IN', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
 
+  // Section 4.6: Recent Activity categories
   const recentActivities = [
-    { id: 1, type: 'Booking', title: 'Booked UPSC Strategy Session', time: '2 hours ago', icon: Calendar, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-    { id: 2, type: 'Payment', title: 'Credits added via Razorpay', time: 'Yesterday', icon: CreditCard, color: 'text-green-600', bg: 'bg-green-50' },
-    { id: 3, type: 'Review', title: 'Left a 5-star review for Priya Iyer', time: '2 days ago', icon: Star, color: 'text-amber-600', bg: 'bg-amber-50' },
-    { id: 4, type: 'Chat', title: 'New message from Arjun Mehta', time: '3 days ago', icon: MessageSquare, color: 'text-blue-600', bg: 'bg-blue-50' },
-  ];
-
-  const notifications = [
-    { id: 1, text: 'Your session with Arjun Mehta starts in 15 minutes.', time: 'Just now', unread: true },
-    { id: 2, text: 'Payment successful for "Career Pro" package.', time: '1 hour ago', unread: false },
-    { id: 3, text: 'New expert match found based on your interest: "Startup Advisor".', time: '5 hours ago', unread: false },
+    { 
+      id: 1, 
+      type: 'Last Booking', 
+      title: 'UPSC Strategy with Arjun Mehta', 
+      time: '2 hours ago', 
+      icon: Calendar, 
+      color: 'text-indigo-600', 
+      bg: 'bg-indigo-50' 
+    },
+    { 
+      id: 2, 
+      type: 'Last Payment', 
+      title: '₹5,000 Credits Added (UPI)', 
+      time: 'Yesterday', 
+      icon: CreditCard, 
+      color: 'text-green-600', 
+      bg: 'bg-green-50' 
+    },
+    { 
+      id: 3, 
+      type: 'Last Review', 
+      title: '5 Stars for Priya Iyer', 
+      time: '2 days ago', 
+      icon: Star, 
+      color: 'text-amber-600', 
+      bg: 'bg-amber-50' 
+    },
+    { 
+      id: 4, 
+      type: 'Recent Chat', 
+      title: 'Message from Vikram Singh', 
+      time: '3 days ago', 
+      icon: MessageSquare, 
+      color: 'text-blue-600', 
+      bg: 'bg-blue-50' 
+    },
   ];
 
   return (
@@ -75,6 +110,11 @@ const UserDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <div className="lg:col-span-3 bg-white rounded-[2.5rem] p-10 border border-slate-200 shadow-sm relative overflow-hidden group">
           <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-4">
+               <span className="px-4 py-1.5 bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase tracking-widest rounded-full border border-indigo-100">
+                Today is {todayDate}
+               </span>
+            </div>
             <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">Welcome back, {currentUser.name}!</h1>
             <p className="text-slate-500 text-lg mb-10 max-w-lg font-medium">Ready for your next mentorship? You have {upcomingSessions.length} sessions booked for the coming week.</p>
             
@@ -119,62 +159,127 @@ const UserDashboard: React.FC = () => {
             onClick={() => navigate('/user/profile')}
             className="w-full py-3 mt-6 bg-slate-50 text-slate-900 rounded-xl text-xs font-black uppercase tracking-widest border border-slate-200 hover:bg-slate-100 transition-all"
           >
-            View Profile
+            Update Profile
           </button>
         </div>
       </div>
 
-      {/* 3. Upcoming Sessions & Wallet */}
+      {/* 3. Upcoming Sessions (Section 4.2) */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
+            <Calendar className="w-6 h-6 text-indigo-600" /> Upcoming Sessions
+          </h2>
+          <button onClick={() => navigate('/user/bookings')} className="text-sm font-black text-indigo-600 hover:underline">View All</button>
+        </div>
+        
+        <div className="grid grid-cols-1 gap-4">
+          {upcomingSessions.length > 0 ? upcomingSessions.map((session) => (
+            <div key={session.id} className="bg-white border border-slate-200 p-8 rounded-[2.5rem] shadow-sm hover:border-indigo-100 hover:shadow-xl transition-all group flex flex-col md:flex-row items-start md:items-center gap-8 relative overflow-hidden">
+              {/* Visual Type Indicator */}
+              <div className="shrink-0 w-20 h-20 bg-indigo-50 rounded-[1.5rem] flex flex-col items-center justify-center border border-indigo-100 transition-colors group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-500">
+                {session.type === 'Video' ? <Video className="w-8 h-8" /> : <Mic className="w-8 h-8" />}
+                <span className="text-[8px] font-black uppercase tracking-tighter mt-1">{session.type}</span>
+              </div>
+
+              <div className="flex-1 min-w-0 space-y-2">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h4 className="text-xl font-black text-slate-900 tracking-tight">{session.consultantName}</h4>
+                  <span className="px-3 py-1 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-lg text-[9px] font-black uppercase tracking-widest">
+                    Confirmed Status
+                  </span>
+                </div>
+                
+                <div className="flex flex-wrap items-center gap-x-8 gap-y-2">
+                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{session.domain}</p>
+                  <div className="flex items-center gap-2 text-slate-700 font-bold text-sm">
+                    <Calendar className="w-4 h-4 text-indigo-400" />
+                    {session.date}
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-700 font-bold text-sm">
+                    <Clock className="w-4 h-4 text-indigo-400" />
+                    {session.time}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-3 w-full md:w-auto border-t md:border-t-0 md:border-l border-slate-100 pt-6 md:pt-0 md:pl-8">
+                <button 
+                  onClick={() => navigate(`/user/live/${session.id}`)}
+                  className="flex-1 md:flex-none px-8 py-4 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100 active:scale-95"
+                >
+                  Join Call
+                </button>
+                <button 
+                  onClick={() => navigate(`/user/bookings`)}
+                  className="flex-1 md:flex-none px-8 py-4 bg-slate-50 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-colors border border-slate-200"
+                >
+                  View Details
+                </button>
+                <button 
+                  className="p-4 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-2xl transition-all border border-slate-100 group/cancel"
+                  title="Cancel Session"
+                >
+                  <XCircle className="w-5 h-5 transition-colors group-hover/cancel:text-rose-600" />
+                </button>
+              </div>
+            </div>
+          )) : (
+            <div className="bg-white border-2 border-dashed border-slate-200 rounded-[3rem] p-20 text-center space-y-6">
+              <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto border border-slate-100 shadow-inner">
+                <Calendar className="w-10 h-10 text-slate-300" />
+              </div>
+              <div className="max-w-xs mx-auto">
+                <h3 className="text-xl font-black text-slate-900">No sessions scheduled</h3>
+                <p className="text-slate-500 font-medium mt-2">Book a consultation with one of our verified experts to get started.</p>
+              </div>
+              <button 
+                onClick={() => navigate('/user/search')} 
+                className="px-10 py-5 bg-indigo-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-xl shadow-indigo-50 hover:bg-indigo-700 transition-all flex items-center gap-3 mx-auto"
+              >
+                Find Consultant <Search className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 4. Recent Activity (Section 4.6) & Wallet */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="flex items-center justify-between">
+        {/* Recent Activity Feed */}
+        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-[2.5rem] p-10 space-y-8 shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-6">
             <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
-              <Calendar className="w-6 h-6 text-indigo-600" /> Upcoming Sessions
+              <History className="w-6 h-6 text-indigo-600" /> Recent Activity
             </h2>
-            <button onClick={() => navigate('/user/bookings')} className="text-sm font-black text-indigo-600 hover:underline">View All</button>
           </div>
-          
-          <div className="space-y-4">
-            {upcomingSessions.map((session) => (
-              <div key={session.id} className="bg-white border border-slate-200 p-6 rounded-[2rem] shadow-sm hover:border-indigo-200 transition-all group flex flex-col sm:flex-row items-center justify-between gap-6">
-                <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center group-hover:bg-indigo-50 transition-colors border border-slate-100">
-                    <Clock className="w-8 h-8 text-indigo-600" />
-                  </div>
-                  <div>
-                    <h4 className="text-lg font-black text-slate-900">{session.consultantName}</h4>
-                    <p className="text-sm text-slate-500 font-medium uppercase tracking-widest text-[10px]">{session.domain} • {session.type}</p>
-                  </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {recentActivities.map((act) => (
+              <div key={act.id} className="flex items-center gap-5 p-4 rounded-2xl hover:bg-slate-50 transition-all cursor-pointer group border border-transparent hover:border-slate-100">
+                <div className={`w-14 h-14 rounded-2xl ${act.bg} ${act.color} flex items-center justify-center transition-transform group-hover:scale-110 shadow-sm`}>
+                  <act.icon className="w-6 h-6" />
                 </div>
-                <div className="flex flex-col sm:items-end gap-1">
-                  <span className="text-sm font-black text-slate-900">{session.date}</span>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{session.time}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">{act.type}</p>
+                  <p className="text-sm font-black text-slate-900 truncate tracking-tight">{act.title}</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">{act.time}</p>
                 </div>
-                <div className="flex gap-3">
-                  <button 
-                    onClick={() => navigate(`/user/live/${session.id}`)}
-                    className="px-6 py-3 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100"
-                  >
-                    Join Call
-                  </button>
-                  <button className="px-6 py-3 bg-slate-50 text-slate-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-100 transition-colors border border-slate-200">
-                    Details
-                  </button>
-                </div>
+                <ChevronRight className="w-4 h-4 text-slate-300 opacity-0 group-hover:opacity-100 transition-all" />
               </div>
             ))}
-            {upcomingSessions.length === 0 && (
-              <div className="bg-white border-2 border-dashed border-slate-200 rounded-[2rem] p-16 text-center">
-                <p className="text-slate-500 font-medium mb-4">No sessions found for this week</p>
-                <button onClick={() => navigate('/user/search')} className="text-indigo-600 font-black uppercase tracking-widest text-sm hover:underline">Find a mentor</button>
-              </div>
-            )}
           </div>
+          <button 
+            onClick={() => navigate('/user/notifications')}
+            className="w-full py-4 bg-slate-50 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-colors border border-slate-100"
+          >
+            View Full Log
+          </button>
         </div>
 
+        {/* Wallet & Plan */}
         <div className="space-y-6">
           <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
-            <Wallet className="w-6 h-6 text-indigo-600" /> Credits & Plan
+            <Wallet className="w-6 h-6 text-indigo-600" /> Wallet & Plan
           </h2>
           <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden group">
             <div className="relative z-10 flex flex-col h-full">
@@ -208,82 +313,7 @@ const UserDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* 4. Recent Activity & Notifications Preview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-        <div className="bg-white border border-slate-200 rounded-[2.5rem] p-10 space-y-8 shadow-sm">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-6">
-            <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
-              <History className="w-6 h-6 text-indigo-600" /> Recent Activity
-            </h2>
-          </div>
-          <div className="space-y-6">
-            {recentActivities.map((act) => (
-              <div key={act.id} className="flex items-center gap-5 group cursor-pointer">
-                <div className={`w-12 h-12 rounded-2xl ${act.bg} ${act.color} flex items-center justify-center transition-transform group-hover:scale-110`}>
-                  <act.icon className="w-6 h-6" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-slate-900 truncate tracking-tight">{act.title}</p>
-                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5">{act.type} • {act.time}</p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-slate-300 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-white border border-slate-200 rounded-[2.5rem] p-10 space-y-8 shadow-sm">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-6">
-            <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
-              <Bell className="w-6 h-6 text-indigo-600" /> Notifications
-            </h2>
-            <button className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Mark all as read</button>
-          </div>
-          <div className="space-y-6">
-            {notifications.map((notif) => (
-              <div key={notif.id} className="flex items-start gap-4 p-4 hover:bg-slate-50 rounded-2xl transition-colors relative group">
-                {notif.unread && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-indigo-600 rounded-r-full"></div>}
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm tracking-tight ${notif.unread ? 'font-black text-slate-900' : 'font-medium text-slate-500'}`}>{notif.text}</p>
-                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">{notif.time}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <button 
-            onClick={() => navigate('/user/notifications')}
-            className="w-full py-4 bg-slate-50 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-colors border border-slate-100"
-          >
-            View All Notifications
-          </button>
-        </div>
-      </div>
-
-      {/* 5. Quick Actions */}
-      <section className="space-y-6">
-        <h2 className="text-2xl font-black text-slate-900">Quick Actions</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-          {[
-            { label: 'Find Expert', icon: Search, path: '/user/search' },
-            { label: 'Continue Chat', icon: MessageSquare, path: '/user/messages' },
-            { label: 'Buy Credits', icon: Wallet, path: '/user/credits' },
-            { label: 'View Bookings', icon: Calendar, path: '/user/bookings' },
-          ].map((action, idx) => (
-            <button 
-              key={idx} 
-              onClick={() => navigate(action.path)}
-              className="flex flex-col items-center justify-center p-8 rounded-[2rem] border border-slate-200 bg-white hover:border-indigo-600 hover:shadow-xl hover:-translate-y-1 transition-all gap-4 group"
-            >
-              <div className="p-4 bg-slate-50 rounded-2xl text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                <action.icon className="w-7 h-7" />
-              </div>
-              <span className="text-xs font-black text-slate-900 uppercase tracking-widest text-center">{action.label}</span>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {/* 6. Recommended Consultants */}
+      {/* 5. Recommended Consultants */}
       <section className="space-y-8">
         <div className="flex items-center justify-between">
           <h2 className="text-3xl font-black text-slate-900 tracking-tight">Recommended Experts</h2>
@@ -321,7 +351,7 @@ const UserDashboard: React.FC = () => {
                 <div className="mt-auto flex items-center justify-between pt-6 border-t border-slate-50">
                   <span className="font-black text-2xl text-slate-900 tabular-nums tracking-tighter">₹{con.pricePerSession.toLocaleString('en-IN')}</span>
                   <button 
-                    onClick={() => navigate(`/user/booking/${con.id}`)}
+                    onClick={() => navigate(`/user/consultant/${con.id}`)}
                     className="px-6 py-3 bg-slate-900 text-white text-[10px] font-black rounded-xl hover:bg-indigo-600 transition-colors uppercase tracking-widest shadow-lg shadow-slate-100 active:scale-95"
                   >
                     View Profile

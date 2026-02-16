@@ -36,7 +36,7 @@ const DashboardLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex bg-slate-50">
+    <div className="min-h-screen bg-slate-50">
       {/* Sidebar Mobile Overlay */}
       {isSidebarOpen && (
         <div 
@@ -45,10 +45,10 @@ const DashboardLayout: React.FC = () => {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Fixed Position */}
       <aside className={`
         fixed inset-y-0 left-0 w-72 bg-white border-r border-slate-200 z-50 transform transition-transform duration-300 ease-in-out
-        lg:relative lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="h-full flex flex-col">
           {/* Logo Section */}
@@ -107,8 +107,8 @@ const DashboardLayout: React.FC = () => {
         </div>
       </aside>
 
-      {/* Main Panel */}
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* Main Panel - Offset for Fixed Sidebar */}
+      <div className="flex flex-col min-h-screen min-w-0 lg:pl-72">
         <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6 lg:px-12 sticky top-0 z-30">
           <div className="flex items-center gap-4">
             <button 
