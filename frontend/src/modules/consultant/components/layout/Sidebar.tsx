@@ -56,7 +56,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shrink-0">
             <BookOpen className="text-white" size={18} />
           </div>
-          <span className="text-xl font-bold text-slate-900 tracking-tight">ConsultantPro</span>
+          <span className="text-xl font-bold text-slate-900 tracking-tight">ConsultantHub</span>
         </div>
         <button 
           onClick={onClose} 
