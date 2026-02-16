@@ -1,0 +1,8 @@
+
+{
+  "name": "ConsultantPro - Expert Consultation Platform",
+  "description": "A comprehensive SaaS-style platform for individual and enterprise consultants to manage registrations, sessions, team members, and earnings with a role-based dashboard.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
